@@ -1,46 +1,62 @@
-import { CommonModule, NgClass } from '@angular/common';
-import { Component, signal } from '@angular/core';
-import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
-import { Router } from '@angular/router';
-import { ProduitService } from '../../services/produit.service';
+// login.component.ts
+import { Component } from '@angular/core';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { Router, RouterLink } from '@angular/router';
+import { CommonModule } from '@angular/common';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, RouterLink, NgClass, FormsModule],
+  imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './login.component.html',
-  styleUrls: ['./login.component.css'],
+  // Pas besoin de styleUrls car nous utilisons Tailwind
 })
 export class LoginComponent {
-  constructor(private router: Router, private produitService: ProduitService) {}
+  loginForm: FormGroup;
+  loading = false;
+  error = '';
 
-  close = signal(false);
+  constructor(
+    private formBuilder: FormBuilder,
+    private authService: AuthService,
+    public router: Router // Passage en public pour utilisation dans le template
+  ) {
+    // Rediriger si déjà connecté
+    if (this.authService.isLoggedIn()) {
+      this.router.navigate(['/commandes']);
+    }
 
-  username = '';
-  password = '';
-  response = '';
-
-  ngOnInit() {
-    console.log(this.router.url);
-    this.close.set(true);
+    this.loginForm = this.formBuilder.group({
+      email: ['', [Validators.required, Validators.email]],
+      password: ['', Validators.required]
+    });
   }
 
-  ngOnChanges() {
-    console.log(this.router.url);
-    this.close.set(true);
+  get f() { return this.loginForm.controls; }
+
+  onSubmit(): void {
+    if (this.loginForm.invalid) {
+      return;
+    }
+  
+    this.loading = true;
+    this.error = '';
+  
+    this.authService.login(this.f['email'].value, this.f['password'].value)
+      .subscribe({
+        next: () => {
+            this.router.navigate(['/commandes']);
+        },
+        error: error => {
+          this.error = 'Email ou mot de passe incorrect';
+          this.loading = false;
+        }
+      });
   }
 
-  // handleSubmit() {
-  //   this.produitService
-  //     .login(this.username, this.password)
-  //     .subscribe((data) => {
-  //       this.response = data;
-  //     });
-
-  //   if (this.response != '') {
-  //     this.close.set(true);
-  //     this.router.navigate(['/dashboard']);
-  //   }
-  // }
+  // Méthode pour gérer l'oubli de mot de passe
+  forgotPassword(): void {
+    this.router.navigate(['/reset-password']);
+  }
 }

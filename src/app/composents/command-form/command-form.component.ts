@@ -10,12 +10,20 @@ import {
 } from '@angular/forms';
 import { AlertService } from '../../services/alert.service';
 import { ProduitService } from '../../services/produit.service';
+import { TableService } from '../../services/table.service';
 
 interface Product {
   id: number;
   nom: string;
   prix: number;
   image: string;
+}
+
+interface Table{
+  id: number;
+  numero: number;
+  occupee: boolean;
+  capacite:number;
 }
 
 interface CartItem {
@@ -36,16 +44,21 @@ export class CommandFormComponent implements OnInit {
   products: any[] = [];
   commandeForm: FormGroup;
   cartItems: CartItem[] = [];
+  tables:Table[]=[];
+    
+  
   currentTotal: number = 0;
 
   constructor(
     private fb: FormBuilder,
     private commandeService: CommandeService,
+    private tableService: TableService,
     private produitService: ProduitService,
     private alertService: AlertService
   ) {
     this.commandeForm = this.fb.group({
-      clientName: ['', Validators.required],
+      // clientName: ['', Validators.required],
+      tableId: [null, Validators.required],
       productId: [null, Validators.required],
       quantity: [1, [Validators.required, Validators.min(1), Validators.pattern('^[0-9]*$')]],
     });
@@ -53,6 +66,7 @@ export class CommandFormComponent implements OnInit {
   
   ngOnInit() {
     this.loadProduits();
+    this.loadTables();
   }
 
   private loadProduits() {
@@ -66,6 +80,67 @@ export class CommandFormComponent implements OnInit {
       },
     });
   }
+  private loadTables() {
+    this.tableService.getAvailableTables().subscribe({
+      next: (tables) => this.tables = tables,
+      error: (err) => console.error('Erreur chargement tables:', err)
+    });
+  }
+
+  handleSubmit() {
+    if (this.commandeForm.valid && this.cartItems.length > 0) {
+      this.alertService.showLoading();
+      
+      const commande = {
+        date: new Date(),
+        status: 'EN_ATTENTE',
+        tableId: this.commandeForm.get('tableId')?.value,
+        produits: this.cartItems.map((item) => ({
+          produitId: item.product.id,
+          quantite: item.quantity,
+        })),
+      };
+  
+      this.commandeService.createCommande(commande).subscribe({
+        next: (response) => {
+          this.alertService.closeAlert();
+          this.alertService.showSuccess('La commande a été créée avec succès');
+          this.resetForm();
+        },
+        error: (err) => {
+          this.alertService.closeAlert();
+          
+          // Message d'erreur spécifique selon le type d'erreur
+          const errorMessage = err.message || 'Impossible de créer la commande';
+          
+          this.alertService.showError(errorMessage).then((result) => {
+            if (result.isConfirmed && !err.message.includes('Accès refusé')) {
+              // Ne pas permettre de réessai si c'est une erreur d'autorisation
+              this.handleSubmit();
+            }
+          });
+        },
+      });
+    } else {
+      this.showValidationError();
+    }
+  }
+  
+  private resetForm(): void {
+    this.commandeForm.reset();
+    this.cartItems = [];
+    this.produitService.loadProducts();
+    this.tableService.loadTables();
+  }
+  
+  private showValidationError(): void {
+    const message = this.cartItems.length === 0 
+      ? 'Votre panier est vide'
+      : 'Veuillez remplir tous les champs requis';
+    this.alertService.showWarning(message);
+    this.commandeForm.markAllAsTouched();
+  }
+
 
   get clientName() {
     return this.commandeForm.get('clientName')?.value;
@@ -132,45 +207,7 @@ export class CommandFormComponent implements OnInit {
     }
   }
 
-  handleSubmit() {
-    if (this.commandeForm.valid && this.cartItems.length > 0) {
-      this.alertService.showLoading();
-      const commande = {
-        date: new Date(),
-        status: 'NONREGLE',
-        client: this.clientName,
-        produits: this.cartItems.map((item) => ({
-          produitId: item.product.id,
-          quantite: item.quantity,
-        })),
-      };
-
-      this.commandeService.createCommande(commande).subscribe({
-        next: (response) => {
-          this.alertService.closeAlert();
-          this.alertService.showSuccess('La commande a été créée avec succès');
-          this.commandeForm.reset();
-          this.cartItems = [];
-          this.produitService.loadProducts();
-        },
-        error: (err) => {
-          this.alertService.closeAlert();
-          this.alertService.showError('Impossible de créer la commande').then((result) => {
-            if (result.isConfirmed) {
-              this.handleSubmit();
-            }
-          });
-        },
-      });
-    } else {
-      const message = this.cartItems.length === 0 
-        ? 'Votre panier est vide'
-        : 'Veuillez remplir tous les champs requis';
-      this.alertService.showWarning(message);
-      this.commandeForm.markAllAsTouched();
-    }
-  }
-
+  
   close() {
     this.closed.emit(false);
   }

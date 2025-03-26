@@ -1,5 +1,5 @@
 <div class="h-screen flex flex-col">
-  <app-navbar></app-navbar>
+  <app-navbar *ngIf="authService.isLoggedIn()"></app-navbar> 
   <div class="flex-grow flex">
     <router-outlet></router-outlet>
   </div>

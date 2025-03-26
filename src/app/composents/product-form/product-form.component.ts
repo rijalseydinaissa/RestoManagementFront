@@ -1,3 +1,4 @@
+import { AuthService } from './../../services/auth.service';
 import { ProduitService } from './../../services/produit.service';
 import { Component, EventEmitter, Input, Output, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -23,10 +24,10 @@ export class ProductFormComponent {
  imageFile: File | null = null;
  isEditMode = false;
 
- constructor(private fb: FormBuilder, private produitService: ProduitService,private alertService: AlertService) {
+ constructor(private fb: FormBuilder, private produitService: ProduitService,private alertService: AlertService, public authService: AuthService) {
    this.productForm = this.fb.group({
      nom: ['', [Validators.required]],
-     prixAchat: ['', [Validators.required, Validators.min(1)]],
+     description: ['', [Validators.required, Validators.required]],
      quantite: ['', [Validators.required, Validators.min(1)]],
      categorie: ['', [Validators.required]],
      prix: ['', [Validators.required, Validators.min(1)]],
@@ -38,7 +39,7 @@ export class ProductFormComponent {
      this.isEditMode = true;
      this.productForm.patchValue({
       nom: this.productToEdit.nom,
-      prixAchat: this.productToEdit.prixAchat,
+      description: this.productToEdit.description,
       quantite: this.productToEdit.quantite,
       categorie: this.productToEdit.categorie,
       prix: this.productToEdit.prix,
@@ -59,12 +60,16 @@ export class ProductFormComponent {
  }
 
  handleSubmit() {
+  if (!this.authService.isAdmin()) {
+    this.alertService.showError('Action non autorisée. Seuls les administrateurs peuvent effectuer cette action.');
+    return;
+  }
   if (this.productForm.valid) {
     this.alertService.showLoading();
 
     const productData = {
       ...this.productForm.value,
-      prixAchat: Number(this.productForm.value.prixAchat),
+      description: String(this.productForm.value.description),
       prix: Number(this.productForm.value.prix),
       quantite: Number(this.productForm.value.quantite)
     };
@@ -97,7 +102,7 @@ private updateProduct(productData: any) {
   const updateData = {
     id: this.productToEdit.id,
     nom: productData.nom,
-    prixAchat: parseFloat(productData.prixAchat),
+    description: productData.description,
     prix: parseFloat(productData.prix),
     quantite: parseInt(productData.quantite),
     categorie: productData.categorie,

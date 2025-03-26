@@ -1,3 +1,4 @@
+import { AuthService } from './auth.service';
 import { PaginationService } from './pagination.service';
 import { ApiService } from './api.service';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
@@ -10,7 +11,7 @@ interface ProductResponse {
   id: number;
   nom: string;
   prix: number;
-  prixAchat: number;
+  description: string;
   quantite: number;
   categorie: string;
   image: string | null;
@@ -26,15 +27,29 @@ export class ProduitService {
   products = this.productsSubject.asObservable();
 
   constructor(
-    private apiService : ApiService
+    private apiService : ApiService,private authService:AuthService
     ) {
     this.loadProducts();
+    // Recharger les produits quand le rôle change
+  this.authService.role$.subscribe(() => {
+    this.loadProducts();
+  });
+
   }
+
+  // private checkAdminPermission(): boolean {
+  //   if (!this.authService.isAdmin()) {
+  //     this.alertService.showError('Action non autorisée. Seuls les administrateurs peuvent effectuer cette action.');
+  //     return false;
+  //   }
+  //   return true;
+  // }
 
   public loadProducts() {
     this.apiService.get<ProductResponse[]>(this.endpoint).subscribe(data => {
+      const filteredProduct = this.authService.isAdmin() ? data : data.filter(product => product.statut === 'DISPONIBLE');
       // S'assurer que chaque produit a une propriété image
-      const productsWithImage = data.map((product: { image: any; }) => ({
+      const productsWithImage = filteredProduct.map((product: { image: any; }) => ({
         ...product,
         image: product.image || null
       }));
@@ -53,10 +68,6 @@ export class ProduitService {
       })
     );
   }
-  // public login(username: string, password: string): Observable<any> {
-  //   return this.http.post<any>(this.baseUrl + "/login", { username, password });
-  // }
-// Dans ProduitService
 updateProduct(id: number, productData: any, imageFile: File | null): Observable<any> {
   return this.apiService.put<ProductResponse>(`${this.endpoint}/${id}`, productData).pipe(
     map(response => {

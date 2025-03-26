@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { Router } from '@angular/router';
 import { NavLinkComponent } from "./nav-link/nav-link.component";
+import { AuthService } from '../../services/auth.service';
 
 
 @Component({
@@ -12,11 +13,15 @@ import { NavLinkComponent } from "./nav-link/nav-link.component";
 })
 export class NavbarComponent {
 
-  constructor(private router: Router) {}
+  constructor(private router: Router,public authService: AuthService) {}
 
 
   disconnect() {
-    console.log('Déconnexion');
-    this.router.navigate(['/login']);
+     // Supprimer le token et le rôle stocké
+     localStorage.removeItem('token');
+     localStorage.removeItem('role');
+     this.authService.tokenSubject.next(null);
+     this.authService.roleSubject.next(null);
+     this.router.navigate(['/login']);
   }
 }

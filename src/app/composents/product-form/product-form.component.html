@@ -14,12 +14,12 @@
           Le nom est requis.
         </small>
       </div>
-      <div class="input-flex">
+      <div class="input-flex">  
         <div class="input-group">
-          <label>Prix Achat</label>
-          <input type="number" formControlName="prixAchat" placeholder="ex: 100" />
-          <small *ngIf="productForm.get('prixAchat')?.invalid && productForm.get('prixAchat')?.touched">
-            Le prix d'achat est requis et doit être positif.
+          <label>Description</label>
+          <input type="string" formControlName="description" placeholder="ex: trop nekh" />
+          <small *ngIf="productForm.get('description')?.invalid && productForm.get('description')?.touched">
+            Le description est requis et doit être positif.
           </small>
         </div>
         <div class="input-group">
@@ -34,8 +34,11 @@
         <div class="input-group">
           <label>Catégorie</label>
           <select formControlName="categorie" class="p-2 rounded text-black">
-            <option value="INFORMATIQUE">INFORMATIQUE</option>
-            <option value="ELECTRONIQUE">ELECTRONIQUE</option>
+            <option value="ENTREE">ENTREE</option>
+            <option value="PLAT_PRINCIPAL">PLAT_PRINCIPAL</option>
+            <option value="ENTREE">ENTREE</option>
+            <option value="DESSERT">DESSERT</option>
+            <option value="BOISSON">BOISSON</option>
           </select>
         </div>
         <div class="input-group">
@@ -56,7 +59,9 @@
       type="button"
       class="bg-green py-2 rounded w-full"
       (click)="handleSubmit()"
-      [disabled]="productForm.invalid"
+      [disabled]="!productForm.valid || !authService.isAdmin()"
+      *ngIf="authService.isAdmin()">
+      {{isEditMode ? "Update" : "Create"}}
     >
       {{isEditMode ? "Update" : "Create"}}
     </button>

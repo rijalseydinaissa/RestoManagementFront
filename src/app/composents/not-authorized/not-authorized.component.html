@@ -1,0 +1,15 @@
+<!-- not-authorized.component.html -->
+<div class="error-container">
+    <h1>⛔ Accès refusé</h1>
+    <p>Votre rôle ({{ authService.getRole() }}) ne vous permet pas d'accéder à cette page.</p>
+    
+    <div *ngIf="authService.getRole() === 'ROLE_CUISINIER'">
+      <p>Les cuisiniers n'ont pas accès à la gestion des produits ou au dashboard.</p>
+    </div>
+  
+    <div *ngIf="authService.getRole() === 'ROLE_SERVEUR'">
+      <p>Les serveurs n'ont pas accès au dashboard.</p>
+    </div>
+  
+    <button routerLink="/commandes" class="btn-back">Retour à la connexion</button>
+  </div>

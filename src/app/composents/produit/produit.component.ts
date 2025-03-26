@@ -5,6 +5,8 @@ import { FormsModule } from '@angular/forms';
 import { ProductFormComponent } from '../product-form/product-form.component';
 import { CommonModule } from '@angular/common';
 import { OnInit } from '@angular/core';
+import { AuthService } from '../../services/auth.service';
+import { AlertService } from '../../services/alert.service';
 
 interface Product {
  id: number;
@@ -13,6 +15,7 @@ interface Product {
  quantite: number;
  prix: number;
  categorie: string;
+ description: string;
  statut: string;
 }
 
@@ -34,14 +37,11 @@ export class ProduitComponent implements OnInit {
   categories: string[] = [];
   dropdownOpen: boolean = false;
 
-
-
-  pageSize = 8;
+  pageSize = 6;
   currentPage = 1;
   totalPages = 0;
  
-
-  constructor(private produitService: ProduitService, private paginationService: PaginationService) {}
+  constructor(private produitService: ProduitService, private alertService: AlertService, private paginationService: PaginationService, public authService: AuthService,) {}
 
   ngOnInit(): void {
     this.produitService.getProducts().subscribe(data => {
@@ -77,6 +77,10 @@ export class ProduitComponent implements OnInit {
   //fin pagination
 
   editProduct(product : Product){
+    if (!this.authService.isAdmin()) {
+      this.alertService.showError('Action non autorisée. Seuls les administrateurs peuvent effectuer cette action.');
+      return;
+    }
     this.selectedProduct = product,
     this.showProductForm.set(true);
    }
@@ -85,20 +89,15 @@ export class ProduitComponent implements OnInit {
       this.filteredProducts = [];
       return;
     }
-
     const searchLower = (this.searchTerm || '').toLowerCase();
     this.filteredProducts = this.products.filter((product) => {
       if (!product) return false;
-
       const matchesSearch = product.nom ? 
         product.nom.toLowerCase().includes(searchLower) : false;
-
       const matchesCategory = this.selectedFilter === 'all' || 
         product.categorie === this.selectedFilter;
-
       return matchesSearch && matchesCategory;
     });
-
     this.updateTotalPages();
     this.currentPage = 1;
   }
@@ -126,18 +125,15 @@ export class ProduitComponent implements OnInit {
       console.error('Updated product is null');
       return;
     }
-
     const index = this.products.findIndex(p => p.id === updatedProduct.id);
     if (index !== -1) {
       this.products[index] = {
         ...this.products[index],
         ...updatedProduct
       };
-
       this.filteredProducts = [...this.products];
       this.filterProducts();
     }
-
     this.selectedProduct = null;
     this.showProductForm.set(false);
   }
