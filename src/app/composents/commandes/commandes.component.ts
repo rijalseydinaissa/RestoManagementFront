@@ -36,10 +36,20 @@ export class CommandesComponent implements OnInit {
 
   constructor(private commandeService:CommandeService){}
   
-  ngOnInit(): void {
-    this.loadCommandes();
-    this.filteredCommandes = [...this.commandes];
-  }
+ // Dans CommandesComponent
+ngOnInit(): void {
+  // S'abonner aux commandes
+  this.commandeService.getCommandes().subscribe({
+    next: (data) => {
+      this.commandes = data;
+      this.filteredCommandes = [...this.commandes];
+      this.filterCommandes();
+    },
+    error: (error) => {
+      console.error('Erreur lors du chargement des commandes :', error);
+    }
+  });
+}
   
   loadCommandes(): void {
     this.commandeService.getCommandes().subscribe({
@@ -105,6 +115,26 @@ export class CommandesComponent implements OnInit {
       },
       error: (error) => {
         console.error('Erreur lors de la suppression de la commande :', error);
+      }
+    });
+  }
+
+  // Nouvelle méthode pour annuler une commande
+  annulerCommande(id: number) {
+    this.commandeService.annulerCommande(id).subscribe({
+      next: () => {
+        console.log('Commande annulée avec succès');
+        // Mettre à jour le statut localement
+        const index = this.commandes.findIndex(c => c.id === id);
+        if (index !== -1) {
+          this.commandes[index].status = 'ANNULEE';
+          this.filteredCommandes = [...this.commandes];
+          this.filterCommandes();
+        }
+        this.showDetail.set(true); // Fermer la modal
+      },
+      error: (error) => {
+        console.error('Erreur lors de l\'annulation de la commande :', error);
       }
     });
   }

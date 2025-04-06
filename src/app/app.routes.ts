@@ -53,8 +53,7 @@ export const routes: Routes = [
     canActivate: [AuthGuard, RoleGuard],
     data: { forbiddenRoles: ['ROLE_CUISINIER', 'ROLE_SERVEUR'] }
   },
-  
+  { path: 'not-authorized', component: NotAuthorizedComponent },
   { path: '', redirectTo: '/login', pathMatch: 'full' },
   { path: '**', redirectTo: '/login' },
-  { path: 'not-authorized', component: NotAuthorizedComponent }
 ];

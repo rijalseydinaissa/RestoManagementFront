@@ -1,23 +1,33 @@
 <div class="flex flex-col gap-4 bg-white rounded flex-1 p-4 text-primary max-w-[245px] w-fit">
     <h1 class="underline font-bold text-lg">Commande numero {{id}}</h1>
     <div class="flex flex-col gap-2">
-        <app-cardline attribut="A :" [valeur]="client"></app-cardline>
-        <app-cardline icon="https://www.powertrafic.fr/wp-content/uploads/2023/04/image-ia-exemple.png" attribut="Date :" [valeur]="date"></app-cardline>
-        <app-cardline attribut="nombre de produits :" [valeur]="nombreProduits"></app-cardline>
+      <app-cardline attribut="A :" [valeur]="client"></app-cardline>
+      <app-cardline icon="https://www.powertrafic.fr/wp-content/uploads/2023/04/image-ia-exemple.png" attribut="Date :" [valeur]="date"></app-cardline>
+      <app-cardline attribut="nombre de produits :" [valeur]="nombreProduits"></app-cardline>
     </div>
     <hr>
     <div class="flex flex-col gap-2">
-        <!-- Appliquer une couleur de fond en fonction de la valeur de status -->
-        <app-cardline 
-        attribut="Status :" 
-        [valeur]="status" 
-        [color]="status == 'REGLE' ? 'bg-green' : 'bg-red'">
-        </app-cardline>
-        <app-cardline attribut="Total :" [valeur]="total"></app-cardline>
+      <!-- Appliquer une couleur de fond en fonction de la valeur de status -->
+      <app-cardline
+        attribut="Status :"
+        [valeur]="status"
+        [color]="getStatusColor()">
+      </app-cardline>
+      <app-cardline attribut="Total :" [valeur]="total"></app-cardline>
     </div>
-
     <div class="flex justify-between">
-        <button (click)="updateStatus()" class="bg-green px-2 py-1 rounded" [disabled]="status=='REGLE'">Valider</button>
-        <button class="bg-primary px-2 py-1 rounded text-gray-200" (click)="open()">Details</button>
+      <button 
+        (click)="updateStatus()" 
+        class="bg-green px-2 py-1 rounded" 
+        [disabled]="status === 'SERVI' || status === 'ANNULEE'">
+        Valider
+      </button>
+      <button 
+        *ngIf="canCancel()" 
+        (click)="annuler()" 
+        class="bg-red-500 px-2 py-1 rounded text-white">
+        Annuler
+      </button>
+      <button class="bg-primary px-2 py-1 rounded text-gray-200" (click)="open()">Details</button>
     </div>
-</div>
+  </div>

@@ -1,0 +1,36 @@
+<div class="notifications-container">
+    <div class="notifications-header">
+      <h3>Notifications <span *ngIf="unreadCount > 0" class="badge">{{unreadCount}}</span></h3>
+      <div class="actions">
+        <button class="btn btn-sm" (click)="toggleShowAll()">
+          {{ showAll ? 'Afficher non lues' : 'Afficher toutes' }}
+        </button>
+        <button class="btn btn-sm btn-primary" (click)="markAllAsRead()" *ngIf="unreadCount > 0">
+          Tout marquer comme lu
+        </button>
+      </div>
+    </div>
+    
+    <div class="notifications-list" *ngIf="notifications.length > 0">
+      <div 
+        *ngFor="let notification of notifications" 
+        class="notification-item" 
+        [class.unread]="!notification.lue"
+        (click)="goToCommande(notification.commandeId, notification, $event)">
+        <div class="notification-content">
+          <p class="message">{{ notification.message }}</p>
+          <small class="date">{{ notification.dateCreation | date:'dd/MM/yyyy HH:mm' }}</small>
+        </div>
+        <button 
+          *ngIf="!notification.lue" 
+          class="mark-read-btn" 
+          (click)="markAsRead(notification, $event)">
+          ✓
+        </button>
+      </div>
+    </div>
+    
+    <div class="empty-state" *ngIf="notifications.length === 0">
+      <p>Aucune notification {{ showAll ? '' : 'non lue' }}.</p>
+    </div>
+  </div>

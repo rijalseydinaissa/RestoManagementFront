@@ -1,15 +1,35 @@
 <!-- not-authorized.component.html -->
 <div class="error-container">
-    <h1>⛔ Accès refusé</h1>
-    <p>Votre rôle ({{ authService.getRole() }}) ne vous permet pas d'accéder à cette page.</p>
-    
-    <div *ngIf="authService.getRole() === 'ROLE_CUISINIER'">
-      <p>Les cuisiniers n'ont pas accès à la gestion des produits ou au dashboard.</p>
-    </div>
-  
-    <div *ngIf="authService.getRole() === 'ROLE_SERVEUR'">
-      <p>Les serveurs n'ont pas accès au dashboard.</p>
-    </div>
-  
-    <button routerLink="/commandes" class="btn-back">Retour à la connexion</button>
+  <!-- Icône correctement positionnée -->
+  <div class="icon-container">
+    <div class="icon-bg"></div>
+    <svg class="icon-symbol" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8 0-1.85.63-3.55 1.69-4.9L16.9 18.31C15.55 19.37 13.85 20 12 20zm6.31-3.1L7.1 5.69C8.45 4.63 10.15 4 12 4c4.42 0 8 3.58 8 8 0 1.85-.63 3.55-1.69 4.9z"/>
+    </svg>
   </div>
+  
+  <h1>Accès refusé</h1>
+  
+  <p>Votre rôle <span class="role-badge">{{ authService.getRole() }}</span> ne vous permet pas d'accéder à cette page.</p>
+  
+  <div class="info-block">
+    <p>Les serveurs n'ont accès qu'aux pages de commandes et produits.</p>
+  </div>
+  
+  <div class="buttons-container">
+    <a link="/commandes" class="btn-action">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M15 18l-6-6 6-6"/>
+      </svg>
+      Page des commandes
+    </a>
+    <a link="/login" class="btn-action btn-secondary">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+        <polyline points="16 17 21 12 16 7"/>
+        <line x1="21" y1="12" x2="9" y2="12"/>
+      </svg>
+      Retour à la connexion
+    </a>
+  </div>
+</div>

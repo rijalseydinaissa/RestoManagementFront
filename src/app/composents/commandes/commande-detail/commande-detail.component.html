@@ -1,100 +1,90 @@
-<div class="w-2/3 p-8 flex flex-col gap-6" id="facture-details">
-    <div 
-    
-        class="absolute inset-0 bg-gray-800 bg-opacity-90 flex items-center justify-center text-white"
-        (click)="closeOverlay()"
-        [ngClass] = "closed == true ? 'hidden' : ''"
-    >
-    <button class="absolute top-4 right-4 text-xl rounded text-white">X</button>
-        <div
-            class="bg-white text-gray-800 rounded-lg shadow-2xl w-3/4 h-5/6 overflow-hidden flex"
-            (click)="$event.stopPropagation()"
-        >
-            <div class="w-2/3 p-8 flex flex-col gap-6">
-                <h1 class="text-3xl font-bold text-center text-indigo-600 underline">
-                    Detail Commande
-                </h1>
-                <div class="flex flex-col gap-4">
-                    <div class="flex flex-col gap-4">
-                        <p class="font-semibold">Client</p>
-                        <div class="ml-4 flex flex-col gap-4">
-                            <p class="font-semibold">
-                                Nom: <span class="font-normal">{{ nom }}</span>
-                            </p>
-                        </div>
-                    </div>
-                    <hr class="my-4">
-                    <div class="flex flex-col gap-4">
-                        <p class="font-semibold">Produit</p>
-                        <div class="ml-4 flex justify-between items-center">
-                                    <p>Nombre de produits</p>
-                                <p class="font-normal">{{ cartItems.length }}</p>
-                        </div>
-                    </div>
-                    <hr class="my-4">
-                    <div class="flex flex-col gap-4">
-                        <p class="font-semibold">Paiement</p>
-                        <div class="flex justify-between ml-4 items-center">
-                                    <p>Status</p>
-                                <p class="font-normal">{{ status }}</p>
-                        </div>
-                    </div>
-                    <hr>
-                        <!-- Votre template existant reste identique -->
-                        <div class="flex justify-between font-bold">
-                            <button [disabled]="status == 'NONREGLE'" (click)="reglerFacture(commandeId)" class="w-fit px-6 py-1 bg-green rounded text-white">Regler</button>
-                            <button (click)="deleteCommande()" class="w-fit px-6 py-1 bg-red rounded text-white">Delete</button>
-                        </div>
-                        <!-- Reste du template -->
-                </div>
-                <div
-                    class="mt-auto text-2xl flex justify-between bg-indigo-600 text-white p-4 rounded-lg"
-                >
-                    <p>Prix total:</p>
-                    <span>{{ currentTotal }} Fr</span>
-                </div>
-            </div>
-            <div class="w-1/3 bg-primary p-8 flex flex-col gap-4 overflow-y-auto">
-                <h2 class="text-2xl font-bold text-center text-white underline">Produits Commandees</h2>
-                <!-- <p class="font-normal">{{ cartItems?.length || 0 }}</p> -->
-                <div
-                    *ngFor="let item of cartItems"
-                    class="flex gap-4 bg-white text-indigo-600 rounded-lg p-4 shadow-md"
-                >
-                    <img [src]="item.produit.image" alt="" class="w-16 h-16 rounded-lg" />
-                    <div class="flex flex-col justify-between w-full">
-                        <div class="flex justify-between items-center">
-                            <p class="text-lg font-semibold">{{ item.produit.nom }}</p>
-                            <!-- <button class="text-red" (click)="removeFromCart(item)">
-                                x
-                            </button> -->
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <div class="flex items-center gap-2">
-                                <!-- <button
-                                    class="bg-gray-300 p-1 rounded"
-                                    (click)="updateCartItemQuantity(item, -1)"
-                                >
-                                    -
-                                </button> -->
-                                <p
-                                    class="p-1 w-8 h-8 flex items-center justify-center bg-indigo-600 text-white rounded"
-                                >
-                                    {{ item.quantite }}
-                                </p>
-                                <!-- <button
-                                    class="bg-gray-300 p-1 rounded"
-                                    (click)="updateCartItemQuantity(item, +1)"
-                                >
-                                    +
-                                </button> -->
-                            </div>
-                            <p class="text-xl">{{ item.produit.prix * item.quantite }} Fr</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
+<div class="absolute inset-0 bg-gray-800 bg-opacity-90 flex items-center justify-center text-white"
+     (click)="closeOverlay()"
+     [ngClass]="closed == true ? 'hidden' : ''">
+  <button class="absolute top-4 right-4 text-xl rounded text-white">X</button>
+  <div class="bg-white text-gray-800 rounded-lg shadow-2xl w-3/4 h-5/6 overflow-hidden flex"
+       (click)="$event.stopPropagation()">
+    <div class="w-2/3 p-8 flex flex-col gap-6">
+      <h1 class="text-3xl font-bold text-center text-indigo-600 underline">
+        Detail Commande
+      </h1>
+      
+      <!-- Mode d'affichage normal -->
+      <div class="flex flex-col gap-4">
+        <div class="flex flex-col gap-4">
+          <p class="font-semibold">Client</p>
+          <div class="ml-4 flex flex-col gap-4">
+            <p class="font-semibold">
+              Nom: <span class="font-normal">{{ nom }}</span>
+            </p>
+          </div>
         </div>
+        <hr class="my-4">
+        <div class="flex flex-col gap-4">
+          <p class="font-semibold">Produit</p>
+          <div class="ml-4 flex justify-between items-center">
+            <p>Nombre de produits</p>
+            <p class="font-normal">{{ cartItems.length }}</p>
+          </div>
+        </div>
+        <hr class="my-4">
+        <div class="flex flex-col gap-4">
+          <p class="font-semibold">Paiement</p>
+          <div class="flex justify-between ml-4 items-center">
+            <p>Status</p>
+            <p class="font-normal">{{ status }}</p>
+          </div>
+        </div>
+        <hr>
+        <div class="flex justify-between font-bold">
+          <button [disabled]="status !== 'SERVI'" 
+                  (click)="reglerFacture(commandeId)" 
+                  class="w-fit px-6 py-1 bg-green rounded text-white">
+            Regler
+          </button>
+          <button [disabled]="authService.isCUISINIER()" 
+                  (click)="deleteCommande()" 
+                  class="w-fit px-6 py-1 bg-red rounded text-white">
+            Delete
+          </button>
+          <button [disabled]="authService.isCUISINIER()" 
+                  *ngIf="canCancel()" 
+                  (click)="annulerCommande()" 
+                  class="w-fit px-6 py-1 bg-red rounded text-white">
+            Annuler
+          </button>
+          <button [disabled]="status !== 'EN_ATTENTE' || authService.isCUISINIER()" 
+                  (click)="requestEdit()" 
+                  class="w-fit px-6 py-1 bg-blue-500 rounded text-white">
+            Modifier
+          </button>
+        </div>
+      </div>
+      
+      <div class="mt-auto text-2xl flex justify-between bg-indigo-600 text-white p-4 rounded-lg">
+        <p>Prix total:</p>
+        <span>{{ currentTotal }} Fr</span>
+      </div>
     </div>
+    <div class="w-1/3 bg-primary p-8 flex flex-col gap-4 overflow-y-auto">
+      <h2 class="text-2xl font-bold text-center text-white underline">Produits Commandees</h2>
+      <div *ngFor="let item of cartItems"
+           class="flex gap-4 bg-white text-indigo-600 rounded-lg p-4 shadow-md">
+        <img [src]="item.produit.image" alt="" class="w-16 h-16 rounded-lg" />
+        <div class="flex flex-col justify-between w-full">
+          <div class="flex justify-between items-center">
+            <p class="text-lg font-semibold">{{ item.produit.nom }}</p>
+          </div>
+          <div class="flex justify-between items-center">
+            <div class="flex items-center gap-2">
+              <p class="p-1 w-8 h-8 flex items-center justify-center bg-indigo-600 text-white rounded">
+                {{ item.quantite }}
+              </p>
+            </div>
+            <p class="text-xl">{{ item.produit.prix * item.quantite }} Fr</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
-

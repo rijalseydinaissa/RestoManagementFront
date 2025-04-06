@@ -1,6 +1,6 @@
 import { CommandeService } from './../../services/commande.service';
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Output, OnInit } from '@angular/core';
+import { Component, EventEmitter, Input, Output, OnInit, OnChanges, SimpleChanges } from '@angular/core';
 import {
   FormsModule,
   ReactiveFormsModule,
@@ -19,11 +19,11 @@ interface Product {
   image: string;
 }
 
-interface Table{
+interface Table {
   id: number;
   numero: number;
   occupee: boolean;
-  capacite:number;
+  capacite: number;
 }
 
 interface CartItem {
@@ -38,14 +38,19 @@ interface CartItem {
   templateUrl: './command-form.component.html',
   styleUrl: './command-form.component.css',
 })
-export class CommandFormComponent implements OnInit {
+export class CommandFormComponent implements OnInit, OnChanges {
   @Output() closed = new EventEmitter<boolean>();
+  @Input() editMode: boolean = false;
+  @Input() commandeToEdit: any = null;
+  @Output() commandeUpdated = new EventEmitter<any>();
 
   products: any[] = [];
   commandeForm: FormGroup;
   cartItems: CartItem[] = [];
-  tables:Table[]=[];
-    
+  tables: Table[] = [];
+  
+  formTitle: string = 'Nouvelle Commande';
+  submitButtonText: string = 'Créer Commande';
   
   currentTotal: number = 0;
 
@@ -57,9 +62,8 @@ export class CommandFormComponent implements OnInit {
     private alertService: AlertService
   ) {
     this.commandeForm = this.fb.group({
-      // clientName: ['', Validators.required],
       tableId: [null, Validators.required],
-      productId: [null, Validators.required],
+      productId: [null],
       quantity: [1, [Validators.required, Validators.min(1), Validators.pattern('^[0-9]*$')]],
     });
   }
@@ -68,11 +72,53 @@ export class CommandFormComponent implements OnInit {
     this.loadProduits();
     this.loadTables();
   }
+  
+  ngOnChanges(changes: SimpleChanges) {
+    if (changes['commandeToEdit'] && this.commandeToEdit) {
+      this.setupEditMode();
+    }
+    
+    if (changes['editMode']) {
+      this.updateFormLabels();
+    }
+  }
+  
+  private setupEditMode() {
+    if (this.commandeToEdit && this.editMode) {
+      // Charger les valeurs du formulaire
+      this.commandeForm.patchValue({
+        tableId: this.commandeToEdit.tableId || this.commandeToEdit.table?.id,
+      });
+      
+      // Charger les produits dans le panier
+      this.cartItems = [];
+      if (this.commandeToEdit.commandeProduits && this.commandeToEdit.commandeProduits.length > 0) {
+        this.commandeToEdit.commandeProduits.forEach((item: any) => {
+          this.cartItems.push({
+            product: item.produit,
+            quantity: item.quantite
+          });
+        });
+      }
+      
+      // Assurez-vous que le formulaire est valide après initialisation
+      this.commandeForm.updateValueAndValidity();
+    }
+  }
+  
+  private updateFormLabels() {
+    if (this.editMode) {
+      this.formTitle = 'Modifier Commande';
+      this.submitButtonText = 'Enregistrer Modifications';
+    } else {
+      this.formTitle = 'Nouvelle Commande';
+      this.submitButtonText = 'Créer Commande';
+    }
+  }
 
   private loadProduits() {
     this.produitService.getProducts().subscribe({
       next: (produits) => {
-        console.log(produits);
         this.products = produits;
       },
       error: (err) => {
@@ -80,6 +126,13 @@ export class CommandFormComponent implements OnInit {
       },
     });
   }
+getProductAvailability(productId: number): { available: boolean, message?: string } {
+  const product = this.products.find(p => p.id === productId);
+  if (!product) return { available: false, message: 'Produit introuvable' };
+  if (!product.disponible) return { available: false, message: 'Produit indisponible' };
+  return { available: true };
+}
+  
   private loadTables() {
     this.tableService.getAvailableTables().subscribe({
       next: (tables) => this.tables = tables,
@@ -92,45 +145,100 @@ export class CommandFormComponent implements OnInit {
       this.alertService.showLoading();
       
       const commande = {
+        id: this.editMode ? this.commandeToEdit.id : undefined,
         date: new Date(),
-        status: 'EN_ATTENTE',
+        status: this.editMode ? this.commandeToEdit.status : 'EN_ATTENTE',
         tableId: this.commandeForm.get('tableId')?.value,
         produits: this.cartItems.map((item) => ({
           produitId: item.product.id,
           quantite: item.quantity,
         })),
       };
-  
-      this.commandeService.createCommande(commande).subscribe({
-        next: (response) => {
-          this.alertService.closeAlert();
-          this.alertService.showSuccess('La commande a été créée avec succès');
-          this.resetForm();
-        },
-        error: (err) => {
-          this.alertService.closeAlert();
-          
-          // Message d'erreur spécifique selon le type d'erreur
-          const errorMessage = err.message || 'Impossible de créer la commande';
-          
-          this.alertService.showError(errorMessage).then((result) => {
-            if (result.isConfirmed && !err.message.includes('Accès refusé')) {
-              // Ne pas permettre de réessai si c'est une erreur d'autorisation
-              this.handleSubmit();
-            }
-          });
-        },
-      });
+      
+      if (this.editMode) {
+        this.updateExistingCommande(commande);
+      } else {
+        this.createNewCommande(commande);
+      }
     } else {
       this.showValidationError();
     }
   }
+  
+  // private createNewCommande(commande: any) {
+  //   this.commandeService.createCommande(commande).subscribe({
+  //     next: (response) => {
+  //       this.alertService.closeAlert();
+  //       // Afficher le message de succès SEULEMENT si le backend a répondu avec succès
+  //       this.alertService.showSuccess('La commande a été créée avec succès');
+  //       this.resetForm();
+  //     },
+  //     error: (err) => {
+  //       this.alertService.closeAlert();
+  //       // Afficher le message d'erreur exact du backend
+  //       console.error("Erreur détectée:", err);
+  //       this.alertService.showError(err.message || 'Erreur lors de la création de la commande');
+        
+  //       // Recharger les produits pour avoir les stocks à jour
+  //       this.produitService.loadProducts();
+  //     }
+  //   });
+  // }
+  
+  private createNewCommande(commande: any) {
+    this.commandeService.createCommande(commande).subscribe({
+      next: (response) => {
+        this.alertService.closeAlert();
+        // Afficher le message de succès SEULEMENT si le backend a répondu avec succès
+        this.alertService.showSuccess('La commande a été créée avec succès');
+        this.resetForm();
+      },
+      error: (err) => {
+        this.alertService.closeAlert();
+        // Afficher le message d'erreur exact du backend
+        console.error("Erreur détectée:", err);
+        this.alertService.showError(err.message || 'Erreur lors de la création de la commande');
+        
+        // Recharger les produits pour avoir les stocks à jour
+        this.produitService.loadProducts();
+      }
+    });
+  }
+  private updateExistingCommande(commande: any) {
+    this.commandeService.updateCommande(commande.id, commande).subscribe({
+      next: (response) => {
+        this.alertService.closeAlert();
+        this.alertService.showSuccess('La commande a été mise à jour avec succès');
+        this.commandeUpdated.emit(response);
+        this.resetForm();
+        this.close();
+      },
+      error: (err) => {
+        this.handleError(err);
+      },
+    });
+  }
+  
+  private handleError(err: any) {
+    this.alertService.closeAlert();
+    // Si le backend renvoie un message clair, on l'affiche
+    if (err.error && typeof err.error === 'string') {
+        this.alertService.showError(err.error);
+    } 
+    // Sinon, message par défaut
+    else {
+        this.alertService.showError('Erreur lors du traitement de la commande');
+    }
+}
   
   private resetForm(): void {
     this.commandeForm.reset();
     this.cartItems = [];
     this.produitService.loadProducts();
     this.tableService.loadTables();
+    this.editMode = false;
+    this.commandeToEdit = null;
+    this.updateFormLabels();
   }
   
   private showValidationError(): void {
@@ -141,17 +249,13 @@ export class CommandFormComponent implements OnInit {
     this.commandeForm.markAllAsTouched();
   }
 
-
-  get clientName() {
-    return this.commandeForm.get('clientName')?.value;
-  }
-
   get cartTotal() {
     return this.cartItems.reduce(
       (total, item) => total + item.product.prix * item.quantity,
       0
     );
   }
+  
   updateTotalPrice() {
     const productId = this.commandeForm.get('productId')?.value;
     const quantity = this.commandeForm.get('quantity')?.value;
@@ -167,7 +271,7 @@ export class CommandFormComponent implements OnInit {
   }
 
   addToCart() {
-    if (this.commandeForm.valid) {
+    if (this.commandeForm.get('productId')?.valid && this.commandeForm.get('quantity')?.valid) {
       const productId = Number(this.commandeForm.get('productId')?.value);
       const quantity = Number(this.commandeForm.get('quantity')?.value);
       const product = this.products.find((p) => p.id === productId);
@@ -184,12 +288,12 @@ export class CommandFormComponent implements OnInit {
         }
 
         this.currentTotal = 0;
+        this.commandeForm.get('productId')?.reset();
+        this.commandeForm.get('quantity')?.setValue(1);
       }
-    }else{
-      Object.keys(this.commandeForm.controls).forEach(key => {
-        const control = this.commandeForm.get(key);
-        control?.markAsTouched();
-      });
+    } else {
+      this.commandeForm.get('productId')?.markAsTouched();
+      this.commandeForm.get('quantity')?.markAsTouched();
     }
   }
 
@@ -206,7 +310,6 @@ export class CommandFormComponent implements OnInit {
       this.cartItems.splice(index, 1);
     }
   }
-
   
   close() {
     this.closed.emit(false);

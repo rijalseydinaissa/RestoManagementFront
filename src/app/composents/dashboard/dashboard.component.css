@@ -10,3 +10,54 @@ table{
   @apply w-full;
   overflow-x: auto;
 }
+/* dashboard.component.css */
+:host {
+  display: block;
+  height: 100%;
+}
+
+table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+th {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+/* Style pour les barres de défilement */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Animation pour les lignes du tableau */
+tr {
+  transition: all 0.2s ease;
+}
+
+/* Style pour les cartes de statistiques */
+app-stats-card {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+app-stats-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}

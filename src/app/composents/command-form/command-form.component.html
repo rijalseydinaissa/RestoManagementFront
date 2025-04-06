@@ -40,8 +40,8 @@
             (change)="updateTotalPrice()"
           >
             <option [value]="null">Sélectionner un produit</option>
-            <option *ngFor="let product of products" [value]="product.id">
-              {{product.nom}}
+            <option *ngFor="let product of products" [value]="product.id" [disabled]="!product.disponible">
+              {{product.nom}} {{!product.disponible ? '(Indisponible)' : ''}}
             </option>
           </select>
           <small *ngIf="commandeForm.get('productId')?.invalid && commandeForm.get('productId')?.touched" class="text-red-500">
@@ -68,7 +68,7 @@
   </div>
   <div class="bg-purple p-4 rounded-e border-l flex-1 flex flex-col gap-8">
     <h1 class="text-xl underline font-bold text-center">
-      Table qui commande <span>{{clientName}}</span>
+      Table qui commande 
     </h1>
     <div class="bg-primary rounded p-4 h-[186px] overflow-y-scroll">
       <div

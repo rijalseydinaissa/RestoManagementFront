@@ -1,40 +1,34 @@
 <div class="flex flex-col gap-8 p-8 h-full">
-
-    <div class="flex w-full justify-between items-center gap-4">
-      <p class="text-primary text-3xl font-bold">Commandes</p>
-  
-      <!-- Champ de recherche par client -->
-       <div class="border rounded-full px-4 py-2 w-1/4">
-        <input
-          type="text"
-          class="border-none focus-within:outline-none w-full"
-          placeholder="Rechercher par client..."
-          [(ngModel)]="searchClient"
-          (input)="filterCommandes()"
-        />
-      </div>
-  
-      <!-- Champ de filtre par date -->
+  <div class="flex w-full justify-between items-center gap-4">
+    <p class="text-primary text-3xl font-bold">Commandes</p>
+    <!-- Champ de recherche par client -->
+    <div class="border rounded-full px-4 py-2 w-1/4">
       <input
-        type="date"
-        class="border px-4 py-2 rounded-md"
-        [(ngModel)]="filterDate"
-        (change)="filterCommandes()"
+        type="text"
+        class="border-none focus-within:outline-none w-full"
+        placeholder="Rechercher par client..."
+        [(ngModel)]="searchClient"
+        (input)="filterCommandes()"
       />
-  
-      <!-- Bouton Ajouter -->
-      <button
-        class="flex bg-green px-4 py-2 rounded gap-2 text-lg"
-        (click)="handleForm(true)"
-      >
-        <p>+</p>
-        <p>Create new Commande</p>
-      </button>
     </div>
-  
-    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-7 gap-4 bg-primary w-full rounded-xl text-white h-[90%] max-h-[720px] overflow-y-scroll p-4">
-
-      <app-commande-card
+    <!-- Champ de filtre par date -->
+    <input
+      type="date"
+      class="border px-4 py-2 rounded-md"
+      [(ngModel)]="filterDate"
+      (change)="filterCommandes()"
+    />
+    <!-- Bouton Ajouter -->
+    <button
+      class="flex bg-green px-4 py-2 rounded gap-2 text-lg"
+      (click)="handleForm(true)"
+    >
+      <p>+</p>
+      <p>Create new Commande</p>
+    </button>
+  </div>
+  <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-7 gap-4 bg-primary w-full rounded-xl text-white h-[90%] max-h-[720px] overflow-y-scroll p-4">
+    <app-commande-card
       *ngFor="let commande of filteredCommandes"
       [client]="commande.client"
       [nombreProduits]="commande.nombreProduits"
@@ -44,33 +38,32 @@
       [id]="commande.id"
       (statusChange)="handleStatusChange($event)"
       (openDetail)="showDetailModal(commande)"
+      (annulerCommande)="annulerCommande($event)"
     >
       <div class="text-sm text-gray-300">
         <p>Nombre de produits : {{ commande.nombreProduits }}</p>
       </div>
     </app-commande-card>
-    </div>
   </div>
-
-  <app-commande-detail 
-    (close)="showDetailModal(commande)"
-    [commandeId]="commande().id"
-    [closed]="showDetail()" 
-    [nom]="commande().client" 
-    [prenom]="''"
-    [currentTotal]="commande().montantTotal"
-    [cartTotal]="commande().montantTotal" 
-    [cartItems]="commande().commandeProduits || []"
-    [status]="commande().status"
-    (deleteCommand)="deleteCommande($event)"
+</div>
+<app-commande-detail
+  (close)="showDetailModal(commande)"
+  [commandeId]="commande().id"
+  [closed]="showDetail()"
+  [nom]="commande().client"
+  [prenom]="''"
+  [currentTotal]="commande().montantTotal"
+  [cartTotal]="commande().montantTotal"
+  [cartItems]="commande().commandeProduits || []"
+  [status]="commande().status"
+  (deleteCommand)="deleteCommande($event)"
+  (annulerCommand)="annulerCommande($event)"
 >
 </app-commande-detail>
-  <app-command-form
-    (closed)="handleForm($event)"
-    class="absolute inset-0 transform transition-transform bg-black/75 flex items-center justify-end duration-300 text-white"
-    [class.translate-x-0]="showProductForm()"
-    [class.translate-x-full]="!showProductForm()"
-    
-  >
-  </app-command-form>
-  
+<app-command-form
+  (closed)="handleForm($event)"
+  class="absolute inset-0 transform transition-transform bg-black/75 flex items-center justify-end duration-300 text-white"
+  [class.translate-x-0]="showProductForm()"
+  [class.translate-x-full]="!showProductForm()"
+>
+</app-command-form>

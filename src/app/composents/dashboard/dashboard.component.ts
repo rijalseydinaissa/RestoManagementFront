@@ -1,7 +1,7 @@
 import { DashboardService } from './../../services/dashboard.service';
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule } from '@angular/forms';
+import { FormGroup, FormControl, ReactiveFormsModule } from '@angular/forms';
 import { StatsCardComponent } from './stats-card/stats-card.component';
 import { CommandeService } from '../../services/commande.service';
 import { ProduitService } from '../../services/produit.service';
@@ -24,7 +24,7 @@ interface CommandeProduit {
 interface Commande {
   id: number;
   date: string;
-  status: 'REGLE' | 'NONREGLE';
+  status: 'SERVI' | 'EN_ATTENTE' | 'EN_PREPARATION' | 'PRET';
   commandeProduits: CommandeProduit[];
 }
 
@@ -58,6 +58,14 @@ export class DashboardComponent implements OnInit {
   ventes: VenteRecente[] = [];
   plusVendues: ProduitVendu[] = [];
   bientotTermine: ProduitVendu[] = [];
+  allCommandes: Commande[] = [];
+  
+  filterForm = new FormGroup({
+    filterType: new FormControl('all'),
+    dateJour: new FormControl(''),
+    dateDebut: new FormControl(''),
+    dateFin: new FormControl('')
+  });
 
   constructor(
     private commandeService: CommandeService,
@@ -67,13 +75,21 @@ export class DashboardComponent implements OnInit {
 
   ngOnInit() {
     this.loadDashboardData();
+    this.filterForm.valueChanges.subscribe(() => {
+      this.applyFilters();
+    });
   }
 
   async loadDashboardData() {
     try {
+      // Charger d'abord toutes les commandes
+      this.allCommandes = await firstValueFrom(this.dashboardService.getCommands());
+      
+      // Appliquer les filtres
+      this.applyFilters();
+      
+      // Charger les autres données
       await Promise.all([
-        this.loadStats(),
-        this.loadVentesRecentes(),
         this.loadProduitsPlusVendus(),
         this.loadProduitsBientotTermines(),
       ]);
@@ -81,66 +97,96 @@ export class DashboardComponent implements OnInit {
       console.error('Erreur lors du chargement des données:', error);
     }
   }
-
-  private async loadStats() {
-    try {
-      const commandes: Commande[] = await firstValueFrom(this.dashboardService.getCommands());
-      const totalCommandes = commandes.length;
-      const ventesValidees = commandes.filter(cmd => cmd.status === 'REGLE').length;
-      const revenus = commandes
-        .filter(cmd => cmd.status === 'REGLE')
-        .reduce((total, cmd) => {
-          return (
-            total +
-            cmd.commandeProduits.reduce((sum, cp) => {
-              const produit = cp.produit;
-              return produit.prix && produit.prixAchat
-                ? sum + (produit.prix - produit.prixAchat) * cp.quantite
-                : sum;
-            }, 0)
-          );
-        }, 0);
-
-      this.stats = [
-        { title: 'Commandes', value: totalCommandes.toString(), icon: 'commandes.png' },
-        { title: 'Ventes', value: ventesValidees.toString(), icon: 'ventes.png' },
-        { title: 'Revenues', value: `${revenus.toFixed(2)} fr`, icon: 'revenues.png' },
-      ];
-    } catch (error) {
-      console.error('Erreur lors du chargement des stats:', error);
-      this.stats = [
-        { title: 'Commandes', value: '0', icon: 'commandes.png' },
-        { title: 'Ventes', value: '0', icon: 'ventes.png' },
-        { title: 'Revenues', value: '0 fr', icon: 'revenues.png' },
-      ];
+  
+  applyFilters() {
+    const filterType = this.filterForm.get('filterType')?.value;
+    const dateJour = this.filterForm.get('dateJour')?.value;
+    const dateDebut = this.filterForm.get('dateDebut')?.value;
+    const dateFin = this.filterForm.get('dateFin')?.value;
+    
+    let filteredCommandes = [...this.allCommandes];
+    
+    if (filterType === 'jour' && dateJour) {
+      // Filtrer pour une date spécifique choisie
+      const selectedDate = new Date(dateJour).toISOString().split('T')[0];
+      filteredCommandes = this.allCommandes.filter(cmd => 
+        new Date(cmd.date).toISOString().split('T')[0] === selectedDate
+      );
+    } else if (filterType === 'semaine') {
+      // Filtrer pour la semaine en cours
+      const today = new Date();
+      const firstDayOfWeek = new Date(today);
+      firstDayOfWeek.setDate(today.getDate() - today.getDay());
+      
+      filteredCommandes = this.allCommandes.filter(cmd => {
+        const cmdDate = new Date(cmd.date);
+        return cmdDate >= firstDayOfWeek && cmdDate <= today;
+      });
+    } else if (filterType === 'mois') {
+      // Filtrer pour le mois en cours
+      const today = new Date();
+      const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+      
+      filteredCommandes = this.allCommandes.filter(cmd => {
+        const cmdDate = new Date(cmd.date);
+        return cmdDate >= firstDayOfMonth && cmdDate <= today;
+      });
+    } else if (filterType === 'periode' && dateDebut && dateFin) {
+      // Filtrer pour une période spécifique
+      const debut = new Date(dateDebut);
+      const fin = new Date(dateFin);
+      
+      filteredCommandes = this.allCommandes.filter(cmd => {
+        const cmdDate = new Date(cmd.date);
+        return cmdDate >= debut && cmdDate <= fin;
+      });
     }
+    
+    // Mettre à jour les statistiques et les ventes récentes avec les commandes filtrées
+    this.updateStatsWithFilteredData(filteredCommandes);
+    this.updateVentesRecentesWithFilteredData(filteredCommandes);
   }
-
-  private async loadVentesRecentes() {
-    try {
-      const commandes: Commande[] = await firstValueFrom(this.dashboardService.getCommands());
-      this.ventes = commandes
-        .filter(cmd => cmd.status === 'REGLE' && cmd.commandeProduits?.length > 0)
-        .slice(-8)
-        .map(cmd => ({
-          date: new Date(cmd.date).toLocaleDateString(),
-          produit: cmd.commandeProduits[0]?.produit.nom || 'Produit inconnu',
-          quantite: cmd.commandeProduits.reduce((sum, cp) => sum + cp.quantite, 0),
-          prixUnitaire: `${cmd.commandeProduits[0]?.produit.prix || 0} fr`,
-        }));
-    } catch (error) {
-      console.error('Erreur lors du chargement des ventes récentes:', error);
-      this.ventes = [];
+  
+  private updateStatsWithFilteredData(commandes: Commande[]) {
+    const totalCommandes = commandes.length;
+    const ventesValidees = commandes.filter(cmd => cmd.status === 'SERVI').length;
+    let revenus = 0;
+    
+    for (const cmd of commandes.filter(cmd => cmd.status === 'SERVI')) {
+      for (const cp of cmd.commandeProduits) {
+        const produit = cp.produit;
+        if (produit.prix) {
+          // Si vous n'avez plus le prix d'achat, calculez simplement le chiffre d'affaires
+          revenus += produit.prix * cp.quantite;
+        }
+      }
     }
+
+    this.stats = [
+      { title: 'Commandes', value: totalCommandes.toString(), icon: 'commandes.png' },
+      { title: 'Ventes', value: ventesValidees.toString(), icon: 'ventes.png' },
+      { title: 'Revenus', value: `${revenus.toFixed(2)} fr`, icon: 'revenues.png' },
+    ];
+  }
+  
+  private updateVentesRecentesWithFilteredData(commandes: Commande[]) {
+    this.ventes = commandes
+      .filter(cmd => cmd.status === 'SERVI' && cmd.commandeProduits?.length > 0)
+      .slice(-8)
+      .map(cmd => ({
+        date: new Date(cmd.date).toLocaleDateString(),
+        produit: cmd.commandeProduits[0]?.produit.nom || 'Produit inconnu',
+        quantite: cmd.commandeProduits.reduce((sum, cp) => sum + cp.quantite, 0),
+        prixUnitaire: `${cmd.commandeProduits[0]?.produit.prix || 0} fr`,
+      }));
   }
 
   private async loadProduitsPlusVendus() {
     try {
-      const commandes: Commande[] = await firstValueFrom(this.dashboardService.getCommands());
       const ventesParProduit = new Map<number, { nom: string; totalQuantite: number }>();
 
-      commandes
-        .filter(cmd => cmd.status === 'REGLE')
+      this.allCommandes
+        .filter(cmd => cmd.status === 'SERVI')
         .forEach(cmd => {
           cmd.commandeProduits.forEach(cp => {
             const produit = cp.produit;

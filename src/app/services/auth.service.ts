@@ -3,10 +3,18 @@ import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, tap } from 'rxjs';
 import { Router } from '@angular/router';
 
+
+
+interface UserInfo {
+  email: string;
+  role: string;
+  // Ajoutez d'autres propriétés si nécessaire
+}
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
+
   private apiUrl = 'http://localhost:8081'; 
   public tokenSubject = new BehaviorSubject<string | null>(localStorage.getItem('token'));
   public roleSubject = new BehaviorSubject<string | null>(localStorage.getItem('role'));
@@ -40,6 +48,24 @@ export class AuthService {
         })
       );
   }
+
+  getCurrentUser(): UserInfo | null {
+    const token = this.getToken();
+    if (!token) return null;
+  
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      return {
+        email: payload.sub || payload.email,
+        role: payload.role,
+        // Ajoutez d'autres propriétés du payload si nécessaire
+      };
+    } catch (e) {
+      console.error('Error decoding token', e);
+      return null;
+    }
+  }
+  
   isAdmin(): boolean {
     return this.getRole() === 'ROLE_ADMIN'; // Adaptez 'admin' selon le rôle utilisé dans votre backend
   }

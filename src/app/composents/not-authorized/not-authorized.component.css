@@ -1,16 +1,128 @@
 /* not-authorized.component.css */
+:host {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: calc(100vh - 60px);
+  width: 100%;
+  padding: 20px;
+  box-sizing: border-box;
+  background-color: #f5f7fa;
+}
+
 .error-container {
-    text-align: center;
-    padding: 2rem;
-    max-width: 600px;
-    margin: 0 auto;
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  padding: 30px;
+  text-align: center;
+}
+
+/* Conteneur d'icône corrigé */
+.icon-container {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  margin: 0 auto 30px;
+}
+
+/* Cercle de fond rose */
+.icon-bg {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100px;
+  height: 100px;
+  background-color: #ffebee;
+  border-radius: 50%;
+}
+
+/* Icône rouge correctement positionnée */
+.icon-symbol {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 60px;
+  height: 60px;
+  color: #e53935;
+}
+
+h1 {
+  color: #333;
+  font-size: 28px;
+  margin-bottom: 20px;
+  font-weight: 600;
+}
+
+.role-badge {
+  display: inline-block;
+  background-color: #2196f3;
+  color: white;
+  padding: 3px 10px;
+  border-radius: 4px;
+  font-weight: 500;
+  margin: 0 5px;
+}
+
+.info-block {
+  background-color: #e3f2fd;
+  border-left: 4px solid #2196f3;
+  padding: 12px 15px;
+  text-align: left;
+  margin: 20px 0;
+  border-radius: 0 4px 4px 0;
+}
+
+.buttons-container {
+  margin-top: 25px;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+.btn-action {
+  padding: 10px 20px;
+  background-color: #2196f3;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-action:hover {
+  background-color: #1976d2;
+  transform: translateY(-2px);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.btn-secondary {
+  background-color: transparent;
+  color: #2196f3;
+  border: 1px solid #2196f3;
+}
+
+.btn-secondary:hover {
+  background-color: rgba(33, 150, 243, 0.1);
+}
+
+/* Pour les écrans plus petits */
+@media (max-width: 600px) {
+  .buttons-container {
+    flex-direction: column;
   }
   
-  .btn-back {
-    background: #3f51b5;
-    color: white;
-    padding: 0.5rem 1rem;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
+  .btn-action {
+    width: 100%;
   }
+}
